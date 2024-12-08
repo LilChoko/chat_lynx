@@ -1,0 +1,3 @@
+const String supabaseUrl = 'https://sjzkukvusacvnseomnjo.supabase.co';
+const String supabaseKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqemt1a3Z1c2Fjdm5zZW9tbmpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2MDMwMTcsImV4cCI6MjA0OTE3OTAxN30.L0WFe80buks4HQxDUt7-BbVI32jEXDHqkzDyDqjrXFg';
