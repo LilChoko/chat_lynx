@@ -1,49 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatProvider with ChangeNotifier {
-  final SupabaseClient _supabase = Supabase.instance.client;
-
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   List<Map<String, dynamic>> _chats = [];
 
   List<Map<String, dynamic>> get chats => _chats;
 
-  /// Obtiene los chats del usuario autenticado
-  Future<void> fetchChats() async {
+  Future<void> fetchChats(String userId) async {
     try {
-      final userId =
-          _supabase.auth.currentUser!.id; // ID del usuario autenticado
-      print('Iniciando consulta a la tabla chats para el usuario: $userId...');
-      final response = await _supabase
-          .from('chats')
-          .select()
-          .eq('user_id', userId) // Filtra por el usuario autenticado
-          .order('created_at', ascending: false);
+      final querySnapshot = await _firestore
+          .collection('chats')
+          .where('participants', arrayContains: userId)
+          .orderBy('updatedAt', descending: true)
+          .get();
 
-      if (response is List<dynamic>) {
-        _chats = List<Map<String, dynamic>>.from(response);
-        print('Datos obtenidos de Supabase: $_chats');
-      } else {
-        _chats = [];
-      }
+      _chats = querySnapshot.docs
+          .map((doc) => {'id': doc.id, ...doc.data() as Map<String, dynamic>})
+          .toList();
+
+      notifyListeners();
     } catch (e) {
       print('Error al obtener chats: $e');
-      _chats = [];
     }
-    notifyListeners(); // Notifica cambios al UI
   }
 
-  /// Crea un nuevo chat asociado al usuario autenticado
-  Future<void> createChat(String chatName) async {
+  Future<void> createChat(String chatName, String userId) async {
     try {
-      final userId =
-          _supabase.auth.currentUser!.id; // ID del usuario autenticado
-      await _supabase.from('chats').insert({
+      final chatRef = await _firestore.collection('chats').add({
         'name': chatName,
-        'user_id': userId, // Asigna el chat al usuario autenticado
-        'created_at': DateTime.now().toIso8601String(),
+        'participants': [userId],
+        'updatedAt': FieldValue.serverTimestamp(),
       });
-      await fetchChats(); // Refresca la lista de chats
+
+      await _firestore.collection('messages').add({
+        'chatId': chatRef.id,
+        'text': '¡Chat creado!',
+        'senderId': userId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await fetchChats(userId);
     } catch (e) {
       print('Error al crear el chat: $e');
     }

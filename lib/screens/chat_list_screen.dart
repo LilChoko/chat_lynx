@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/chat_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ChatListScreen extends StatefulWidget {
   @override
@@ -8,13 +9,12 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  final _chatNameController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
     final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    chatProvider.fetchChats(); // Cargar los chats al iniciar la pantalla
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    chatProvider.fetchChats(userId); // Cargar los chats al iniciar la pantalla
   }
 
   @override
@@ -25,6 +25,15 @@ class _ChatListScreenState extends State<ChatListScreen> {
       appBar: AppBar(
         title: Text('Conversaciones'),
         backgroundColor: Colors.teal,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.message),
+            onPressed: () {
+              Navigator.pushNamed(
+                  context, '/contacts'); // Ir a la lista de contactos
+            },
+          ),
+        ],
       ),
       body: chatProvider.chats.isEmpty
           ? Center(
@@ -51,57 +60,17 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     chat['name'] ?? 'Sin título',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  subtitle: Text('Último mensaje...'), // Placeholder
+                  subtitle: Text(chat['lastMessage'] ?? 'Sin mensajes aún'),
                   onTap: () {
                     Navigator.pushNamed(
                       context,
                       '/chatDetail',
-                      arguments: chat['id'],
+                      arguments: chat['id'], // Pasa el ID del chat al detalle
                     );
                   },
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateChatDialog(context, chatProvider),
-        child: Icon(Icons.add),
-        backgroundColor: Colors.teal,
-      ),
-    );
-  }
-
-  /// Muestra un diálogo para crear un nuevo chat
-  void _showCreateChatDialog(BuildContext context, ChatProvider chatProvider) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Nuevo Chat'),
-          content: TextField(
-            controller: _chatNameController,
-            decoration: InputDecoration(labelText: 'Nombre del chat'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Cierra el diálogo
-              },
-              child: Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () {
-                final chatName = _chatNameController.text.trim();
-                if (chatName.isNotEmpty) {
-                  chatProvider.createChat(chatName); // Crea el chat
-                  _chatNameController.clear();
-                  Navigator.pop(context); // Cierra el diálogo
-                }
-              },
-              child: Text('Crear'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

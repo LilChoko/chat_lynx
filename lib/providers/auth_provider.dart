@@ -1,32 +1,50 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthProvider with ChangeNotifier {
-  final SupabaseClient _supabase = Supabase.instance.client;
-  bool _isAuthenticated = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  bool get isAuthenticated => _isAuthenticated;
+  User? get currentUser => _auth.currentUser;
 
-  Future<bool> login(String email, String password) async {
+  Future<bool> register(String email, String password, String name) async {
     try {
-      final response = await _supabase.auth.signInWithPassword(
+      // Registrar al usuario en Firebase Authentication
+      final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      if (response.session != null) {
-        _isAuthenticated = true;
-        notifyListeners();
-        return true;
-      }
+
+      // Guardar los datos del usuario en Firestore
+      final user = userCredential.user!;
+      await _firestore.collection('users').doc(user.uid).set({
+        'id': user.uid,
+        'name': name,
+        'email': email,
+        'profilePicture':
+            '', // Puedes agregar funcionalidad de subir imagen más adelante
+      });
+
+      return true;
     } catch (e) {
-      print('Error: $e');
+      print('Error en el registro: $e');
+      return false;
     }
-    return false;
+  }
+
+  Future<bool> login(String email, String password) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      return true;
+    } catch (e) {
+      print('Error en el inicio de sesión: $e');
+      return false;
+    }
   }
 
   Future<void> logout() async {
-    await _supabase.auth.signOut();
-    _isAuthenticated = false;
+    await _auth.signOut();
     notifyListeners();
   }
 }

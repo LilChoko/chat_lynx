@@ -7,12 +7,17 @@ environment:
   sdk: ^3.5.0
 
 dependencies:
+  cloud_firestore: ^5.5.1
+  firebase_auth: ^5.3.4
+  firebase_storage: ^12.3.7
   flutter:
     sdk: flutter
+  flutter_webrtc: ^0.12.3
   image_picker: ^1.1.2
   path_provider: ^2.1.5
   provider: ^6.1.2
   supabase_flutter: ^2.8.1
+  uuid: ^4.5.1
 
 dev_dependencies:
   flutter_test:

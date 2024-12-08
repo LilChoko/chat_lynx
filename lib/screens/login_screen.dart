@@ -28,7 +28,7 @@ class LoginScreen extends StatelessWidget {
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () async {
-                final email = _emailController.text.trim(); // Elimina espacios
+                final email = _emailController.text.trim();
                 final password = _passwordController.text;
 
                 if (email.isEmpty || password.isEmpty) {
@@ -44,9 +44,7 @@ class LoginScreen extends StatelessWidget {
                   Navigator.pushReplacementNamed(context, '/chatList');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text(
-                            'Credenciales incorrectas. Por favor verifica.')),
+                    SnackBar(content: Text('Credenciales incorrectas.')),
                   );
                 }
               },
