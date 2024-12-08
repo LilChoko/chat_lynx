@@ -5,40 +5,47 @@ class ChatProvider with ChangeNotifier {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   List<Map<String, dynamic>> _chats = [];
-  List<Map<String, dynamic>> _messages = [];
 
   List<Map<String, dynamic>> get chats => _chats;
-  List<Map<String, dynamic>> get messages => _messages;
 
+  /// Obtiene los chats del usuario autenticado
   Future<void> fetchChats() async {
-    final response = await _supabase
-        .from('chats')
-        .select()
-        .order('created_at', ascending: false);
+    try {
+      final userId =
+          _supabase.auth.currentUser!.id; // ID del usuario autenticado
+      print('Iniciando consulta a la tabla chats para el usuario: $userId...');
+      final response = await _supabase
+          .from('chats')
+          .select()
+          .eq('user_id', userId) // Filtra por el usuario autenticado
+          .order('created_at', ascending: false);
 
-    _chats = List<Map<String, dynamic>>.from(response);
-    notifyListeners();
+      if (response is List<dynamic>) {
+        _chats = List<Map<String, dynamic>>.from(response);
+        print('Datos obtenidos de Supabase: $_chats');
+      } else {
+        _chats = [];
+      }
+    } catch (e) {
+      print('Error al obtener chats: $e');
+      _chats = [];
+    }
+    notifyListeners(); // Notifica cambios al UI
   }
 
-  Future<void> fetchMessages(String chatId) async {
-    final response = await _supabase
-        .from('messages')
-        .select()
-        .eq('chat_id', chatId)
-        .order('created_at', ascending: true);
-
-    _messages = List<Map<String, dynamic>>.from(response);
-    notifyListeners();
-  }
-
-  Future<void> sendMessage(String chatId, String content) async {
-    await _supabase.from('messages').insert({
-      'chat_id': chatId,
-      'sender_id': _supabase.auth.currentUser!.id,
-      'content': content,
-    });
-
-    await fetchMessages(
-        chatId); // Recarga los mensajes después de enviar uno nuevo
+  /// Crea un nuevo chat asociado al usuario autenticado
+  Future<void> createChat(String chatName) async {
+    try {
+      final userId =
+          _supabase.auth.currentUser!.id; // ID del usuario autenticado
+      await _supabase.from('chats').insert({
+        'name': chatName,
+        'user_id': userId, // Asigna el chat al usuario autenticado
+        'created_at': DateTime.now().toIso8601String(),
+      });
+      await fetchChats(); // Refresca la lista de chats
+    } catch (e) {
+      print('Error al crear el chat: $e');
+    }
   }
 }
