@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'chat_detail_screen.dart';
 
 class ContactsScreen extends StatelessWidget {
   @override
@@ -21,8 +20,8 @@ class ContactsScreen extends StatelessWidget {
           }
 
           final users = snapshot.data!.docs
-              .where((doc) =>
-                  doc['id'] != currentUserId) // Filtra al usuario actual
+              .where(
+                  (doc) => doc.id != currentUserId) // Filtra al usuario actual
               .toList();
 
           if (users.isEmpty) {
@@ -41,7 +40,11 @@ class ContactsScreen extends StatelessWidget {
                 title: Text(user['name']),
                 subtitle: Text(user['email']),
                 onTap: () {
-                  _startChat(context, user['id'], user['name']);
+                  _startChat(
+                    context,
+                    user.id, // ID del usuario seleccionado
+                    user['name'], // Nombre del usuario seleccionado
+                  );
                 },
               );
             },
@@ -52,40 +55,60 @@ class ContactsScreen extends StatelessWidget {
   }
 
   Future<void> _startChat(
-      BuildContext context, String userId, String userName) async {
+      BuildContext context, String otherUserId, String otherUserName) async {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
-    // Buscar si ya existe un chat con este usuario
-    final chatQuery = await FirebaseFirestore.instance
-        .collection('chats')
-        .where('participants', arrayContains: currentUserId)
-        .get();
+    try {
+      // Obtener el nombre del usuario actual
+      final currentUserDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUserId)
+          .get();
 
-    QueryDocumentSnapshot<Map<String, dynamic>>? existingChat;
+      final currentUserName = currentUserDoc.data()?['name'] ?? 'Sin Nombre';
 
-    for (final doc in chatQuery.docs) {
-      if ((doc['participants'] as List).contains(userId)) {
-        existingChat = doc; // Guardamos el chat existente
-        break;
+      // Buscar si ya existe un chat con este usuario
+      final chatQuery = await FirebaseFirestore.instance
+          .collection('chats')
+          .where('participants', arrayContains: currentUserId)
+          .get();
+
+      QueryDocumentSnapshot<Map<String, dynamic>>? existingChat;
+
+      for (final doc in chatQuery.docs) {
+        if ((doc['participants'] as List).contains(otherUserId)) {
+          existingChat = doc; // Guardamos el chat existente
+          break;
+        }
       }
+
+      String chatId;
+
+      if (existingChat != null) {
+        // Si ya existe, usar el ID del chat existente
+        chatId = existingChat.id;
+      } else {
+        // Si no existe, crear uno nuevo
+        final newChatRef = FirebaseFirestore.instance.collection('chats').doc();
+        chatId = newChatRef.id;
+
+        await newChatRef.set({
+          'participants': [currentUserId, otherUserId],
+          'lastMessage': '',
+          'updatedAt': FieldValue.serverTimestamp(),
+          'userNames': {
+            currentUserId: currentUserName,
+            otherUserId: otherUserName,
+          },
+        });
+      }
+
+      // Redirigir a la pantalla de detalle del chat
+      Navigator.pushNamed(context, '/chatDetail', arguments: chatId);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al iniciar el chat: $e')),
+      );
     }
-
-    String chatId;
-
-    if (existingChat != null) {
-      // Si ya existe, usar el ID del chat existente
-      chatId = existingChat.id;
-    } else {
-      // Si no existe, crear uno nuevo
-      final newChat = await FirebaseFirestore.instance.collection('chats').add({
-        'participants': [currentUserId, userId],
-        'lastMessage': '',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      chatId = newChat.id;
-    }
-
-    // Redirigir a la pantalla de detalle del chat
-    Navigator.pushNamed(context, '/chatDetail', arguments: chatId);
   }
 }

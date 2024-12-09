@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/chat_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatListScreen extends StatefulWidget {
   @override
@@ -9,17 +8,30 @@ class ChatListScreen extends StatefulWidget {
 }
 
 class _ChatListScreenState extends State<ChatListScreen> {
-  @override
-  void initState() {
-    super.initState();
-    final chatProvider = Provider.of<ChatProvider>(context, listen: false);
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    chatProvider.fetchChats(userId); // Cargar los chats al iniciar la pantalla
+  int _selectedIndex = 1; // Inicia en la pestaña "Chats"
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Navegación entre las pestañas
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/calls'); // Llamadas
+        break;
+      case 1:
+        // Ya estamos en "Chats", no hacer nada
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/profile'); // Perfil
+        break;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final chatProvider = Provider.of<ChatProvider>(context);
+    final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
       appBar: AppBar(
@@ -29,48 +41,87 @@ class _ChatListScreenState extends State<ChatListScreen> {
           IconButton(
             icon: Icon(Icons.message),
             onPressed: () {
-              Navigator.pushNamed(
-                  context, '/contacts'); // Ir a la lista de contactos
+              Navigator.pushNamed(context, '/contacts');
             },
           ),
         ],
       ),
-      body: chatProvider.chats.isEmpty
-          ? Center(
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('chats')
+            .where('participants', arrayContains: currentUserId)
+            .orderBy('updatedAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
               child: Text(
                 'Sin chats aún.',
                 style: TextStyle(color: Colors.grey, fontSize: 18),
               ),
-            )
-          : ListView.builder(
-              itemCount: chatProvider.chats.length,
-              itemBuilder: (context, index) {
-                final chat = chatProvider.chats[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.teal,
-                    child: Text(
-                      chat['name'] != null && chat['name'].isNotEmpty
-                          ? chat['name'][0].toUpperCase()
-                          : '?',
-                      style: TextStyle(color: Colors.white),
-                    ),
+            );
+          }
+
+          final chats = snapshot.data!.docs;
+
+          return ListView.builder(
+            itemCount: chats.length,
+            itemBuilder: (context, index) {
+              final chat = chats[index];
+              final participants =
+                  List<String>.from(chat['participants']); // Conversión segura
+              final otherUserId =
+                  participants.firstWhere((id) => id != currentUserId);
+              final otherUserName = chat['userNames'][otherUserId];
+              final chatId = chat.id;
+
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.teal,
+                  child: Text(
+                    otherUserName[0].toUpperCase(),
+                    style: TextStyle(color: Colors.white),
                   ),
-                  title: Text(
-                    chat['name'] ?? 'Sin título',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(chat['lastMessage'] ?? 'Sin mensajes aún'),
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/chatDetail',
-                      arguments: chat['id'], // Pasa el ID del chat al detalle
-                    );
-                  },
-                );
-              },
-            ),
+                ),
+                title: Text(
+                  otherUserName,
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(chat['lastMessage'] ?? 'Sin mensajes aún'),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/chatDetail',
+                    arguments: chatId,
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.call),
+            label: 'Llamadas',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat),
+            label: 'Chats',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
+          ),
+        ],
+      ),
     );
   }
 }

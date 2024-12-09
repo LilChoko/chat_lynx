@@ -25,22 +25,25 @@ class ChatProvider with ChangeNotifier {
     }
   }
 
-  Future<void> createChat(String chatName, String userId) async {
+  Future<void> createChat({
+    required String currentUserId,
+    required String currentUserName,
+    required String otherUserId,
+    required String otherUserName,
+  }) async {
     try {
-      final chatRef = await _firestore.collection('chats').add({
-        'name': chatName,
-        'participants': [userId],
+      // Generar un ID único para el chat
+      final chatRef = _firestore.collection('chats').doc();
+
+      await chatRef.set({
+        'participants': [currentUserId, otherUserId],
+        'lastMessage': '',
         'updatedAt': FieldValue.serverTimestamp(),
+        'userNames': {
+          currentUserId: currentUserName,
+          otherUserId: otherUserName,
+        },
       });
-
-      await _firestore.collection('messages').add({
-        'chatId': chatRef.id,
-        'text': '¡Chat creado!',
-        'senderId': userId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      await fetchChats(userId);
     } catch (e) {
       print('Error al crear el chat: $e');
     }
