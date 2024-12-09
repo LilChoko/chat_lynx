@@ -169,16 +169,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
           showUnselectedLabels: true,
           items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.call),
-              label: 'Calls',
+              icon: Icon(Icons.video_call_rounded),
+              label: 'Llamadas',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.chat),
+              icon: Icon(Icons.chat_rounded),
               label: 'Chats',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
-              label: 'Profile',
+              label: 'Perfil',
             ),
           ],
         ),
