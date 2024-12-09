@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ChatDetailScreen extends StatelessWidget {
   final String chatId;
@@ -62,9 +65,9 @@ class ChatDetailScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Online ahora',
+                      'En línea ahora',
                       style: TextStyle(
-                        color: Colors.grey[300],
+                        color: Colors.green[400],
                         fontSize: 14,
                       ),
                     ),
@@ -122,7 +125,12 @@ class ChatDetailScreen extends StatelessWidget {
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final message = messages[index];
-                    final isMe = message['senderId'] == currentUserId;
+                    final data = message.data() as Map<String, dynamic>?;
+                    final isMe = data?['senderId'] == currentUserId;
+                    final fileUrl = data?['fileUrl'];
+                    final fileType = data != null && fileUrl != null
+                        ? (data['fileType'] ?? 'image')
+                        : null;
 
                     return Align(
                       alignment:
@@ -132,7 +140,9 @@ class ChatDetailScreen extends StatelessWidget {
                           vertical: 5,
                           horizontal: 10,
                         ),
-                        padding: EdgeInsets.all(10),
+                        padding: fileUrl == null
+                            ? EdgeInsets.all(10)
+                            : EdgeInsets.zero,
                         decoration: BoxDecoration(
                           color: isMe ? Color(0xFF0B2545) : Color(0xFFF3F4F6),
                           borderRadius: BorderRadius.only(
@@ -142,30 +152,37 @@ class ChatDetailScreen extends StatelessWidget {
                             bottomRight: Radius.circular(10),
                           ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: isMe
-                              ? CrossAxisAlignment.end
-                              : CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              message['text'],
-                              style: TextStyle(
-                                color: isMe ? Colors.white : Color(0xFF0B2545),
-                                fontSize: 16,
+                        child: fileUrl != null
+                            ? fileType == 'image'
+                                ? InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              FullScreenImage(fileUrl: fileUrl),
+                                        ),
+                                      );
+                                    },
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        fileUrl,
+                                        width: 150,
+                                        height: 150,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  )
+                                : Text('Archivo enviado')
+                            : Text(
+                                data?['text'] ?? '',
+                                style: TextStyle(
+                                  color:
+                                      isMe ? Colors.white : Color(0xFF0B2545),
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                            SizedBox(height: 5),
-                            Text(
-                              _formatTimestamp(
-                                  message['createdAt'] as Timestamp?),
-                              style: TextStyle(
-                                color:
-                                    isMe ? Colors.grey[400] : Color(0xFF8A8D91),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     );
                   },
@@ -179,25 +196,59 @@ class ChatDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-    final date = timestamp.toDate();
-    final time = TimeOfDay.fromDateTime(date);
-    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+  Future<File?> _pickFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'mp4'],
+    );
+    if (result != null && result.files.single.path != null) {
+      return File(result.files.single.path!);
+    }
+    return null;
+  }
+
+  Future<String?> _uploadToSupabase(File file, String chatId) async {
+    try {
+      final fileName =
+          'chat_files/$chatId/${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+      await Supabase.instance.client.storage
+          .from('chat_files')
+          .upload(fileName, file);
+
+      final publicUrl = Supabase.instance.client.storage
+          .from('chat_files')
+          .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (e) {
+      print('Error al subir archivo: $e');
+      return null;
+    }
   }
 
   Widget _buildMessageInput(BuildContext context) {
     final _messageController = TextEditingController();
 
     return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.add, color: Color(0xFF0B2545)),
-            onPressed: () {
-              // Acción futura para el botón de "Más"
+            icon: Icon(Icons.attach_file, color: Color(0xFF0B2545)),
+            onPressed: () async {
+              final file = await _pickFile();
+              if (file == null) return;
+
+              final fileUrl = await _uploadToSupabase(file, chatId);
+              if (fileUrl != null) {
+                await FirebaseFirestore.instance.collection('messages').add({
+                  'chatId': chatId,
+                  'senderId': FirebaseAuth.instance.currentUser!.uid,
+                  'fileUrl': fileUrl,
+                  'fileType': file.path.endsWith('.mp4') ? 'video' : 'image',
+                  'createdAt': FieldValue.serverTimestamp(),
+                });
+              }
             },
           ),
           Expanded(
@@ -207,55 +258,55 @@ class ChatDetailScreen extends StatelessWidget {
                 filled: true,
                 fillColor: Color(0xFFF3F4F6),
                 hintText: 'Escribe un mensaje...',
-                hintStyle: TextStyle(color: Color(0xFF8A8D91)),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25.0),
+                  borderRadius: BorderRadius.circular(25),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-          SizedBox(width: 8),
-          GestureDetector(
-            onTap: () async {
+          IconButton(
+            icon: Icon(Icons.send, color: Color(0xFF0B2545)),
+            onPressed: () async {
               final text = _messageController.text.trim();
-              if (text.isEmpty) return;
-
-              final currentUserId = FirebaseAuth.instance.currentUser!.uid;
-
-              try {
-                // Añadir mensaje a la colección 'messages'
+              if (text.isNotEmpty) {
                 await FirebaseFirestore.instance.collection('messages').add({
                   'chatId': chatId,
-                  'senderId': currentUserId,
+                  'senderId': FirebaseAuth.instance.currentUser!.uid,
                   'text': text,
                   'createdAt': FieldValue.serverTimestamp(),
                 });
-
-                // Actualizar el último mensaje en la colección 'chats'
-                await FirebaseFirestore.instance
-                    .collection('chats')
-                    .doc(chatId)
-                    .update({
-                  'lastMessage': text,
-                  'updatedAt': FieldValue.serverTimestamp(),
-                });
-
                 _messageController.clear();
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error al enviar mensaje: $e')),
-                );
               }
             },
-            child: CircleAvatar(
-              radius: 25,
-              backgroundColor: Color(0xFF0B2545),
-              child: Icon(Icons.send_rounded, color: Colors.white),
-            ),
           ),
         ],
       ),
     );
   }
 }
+
+class FullScreenImage extends StatelessWidget {
+  final String fileUrl;
+
+  FullScreenImage({required this.fileUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: Image.network(fileUrl),
+      ),
+    );
+  }
+}
+//Sirve sin video 

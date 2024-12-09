@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:chat_lynx/providers/auth_provider.dart' as local;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'providers/chat_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
@@ -15,7 +16,15 @@ import 'screens/chat_list_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(); // Inicializa Firebase
+  await Firebase.initializeApp();
+
+  // Inicializa Supabase
+  await Supabase.initialize(
+    url: 'https://sjzkukvusacvnseomnjo.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqemt1a3Z1c2Fjdm5zZW9tbmpvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM2MDMwMTcsImV4cCI6MjA0OTE3OTAxN30.L0WFe80buks4HQxDUt7-BbVI32jEXDHqkzDyDqjrXFg',
+  );
+
   runApp(MyApp());
 }
 
@@ -30,7 +39,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Chat App',
-        initialRoute: '/', // Ruta inicial dinámica
+        initialRoute: '/',
         routes: {
           '/login': (context) => LoginScreen(),
           '/register': (context) => RegisterScreen(),
@@ -48,17 +57,15 @@ class MyApp extends StatelessWidget {
           }
           return null;
         },
-        home: _getInitialScreen(), // Redirección dinámica al inicio
+        home: _getInitialScreen(),
       ),
     );
   }
 
-  /// Determina dinámicamente la pantalla inicial
   Widget _getInitialScreen() {
     final currentUser = FirebaseAuth.instance.currentUser;
 
     if (currentUser == null) {
-      // Si no hay usuario autenticado, redirigir al LoginScreen
       return LoginScreen();
     }
 
@@ -75,7 +82,6 @@ class MyApp extends StatelessWidget {
         }
 
         if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-          // Si hay un error o el usuario no existe en Firestore, redirigir al LoginScreen
           return LoginScreen();
         }
 
@@ -84,11 +90,9 @@ class MyApp extends StatelessWidget {
             userData['phoneNumber'].isNotEmpty;
 
         if (!hasPhoneNumber) {
-          // Si no tiene número de teléfono, redirigir a PhoneNumberScreen
           return PhoneNumberScreen();
         }
 
-        // Si ya tiene un número registrado, redirigir al ChatListScreen
         return ChatListScreen();
       },
     );
