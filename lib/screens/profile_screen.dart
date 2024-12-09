@@ -70,15 +70,8 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 50,
-                        backgroundColor: Colors.white,
-                        child: Text(
-                          userData['name'][0].toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0B2545), // Azul oscuro
-                          ),
-                        ),
+                        backgroundImage: AssetImage(
+                            'assets/lincito.png'), // Imagen personalizada
                       ),
                       SizedBox(height: 15),
                       Text(
@@ -161,7 +154,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       Divider(),
-                      SizedBox(height: 155),
+                      SizedBox(height: 40),
                       // Botón de cerrar sesión más grande
                       ElevatedButton(
                         onPressed: () async {

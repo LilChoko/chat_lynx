@@ -58,17 +58,9 @@ class ContactsScreen extends StatelessWidget {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: AssetImage('assets/avatar.png'),
-                  radius: 28,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    user['name'][0].toUpperCase(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  backgroundImage:
+                      AssetImage('assets/lincito.png'), // Imagen personalizada
+                  radius: 35,
                 ),
                 title: Text(
                   user['name'],

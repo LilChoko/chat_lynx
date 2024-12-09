@@ -108,13 +108,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: AssetImage('assets/avatar.png'),
-                  radius: 28,
-                  child: Text(
-                    otherUserName[0].toUpperCase(),
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  backgroundColor: Colors.white,
+                  backgroundImage:
+                      AssetImage('assets/lincito.png'), // Imagen personalizada
+                  radius: 35,
                 ),
                 title: Text(
                   otherUserName,
@@ -189,7 +185,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
       ),
       floatingActionButton: Padding(
         padding:
-            const EdgeInsets.only(bottom: 60.0), // Ajusta la posición vertical
+            const EdgeInsets.only(bottom: 0.0), // Ajusta la posición vertical
         child: FloatingActionButton(
           onPressed: () {
             Navigator.pushNamed(context, '/contacts');
