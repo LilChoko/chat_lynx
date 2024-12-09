@@ -14,6 +14,7 @@ dependencies:
     sdk: flutter
   flutter_webrtc: ^0.12.3
   image_picker: ^1.1.2
+  intl: ^0.20.1
   path_provider: ^2.1.5
   provider: ^6.1.2
   supabase_flutter: ^2.8.1
@@ -26,3 +27,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/

@@ -20,64 +20,127 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Registro')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey, // Asocia el formulario con el FormKey
+      backgroundColor: Colors.white, // Fondo blanco
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: 'Nombre'),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu nombre';
-                  }
-                  return null;
-                },
+              SizedBox(height: 40), // Espaciado superior
+              Center(
+                child: Image.asset(
+                  'assets/logo.png', // Imagen del logo
+                  height: 180,
+                ),
               ),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Correo Electrónico'),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu correo';
-                  }
-                  if (!value.endsWith('@itcelaya.edu.mx')) {
-                    return 'El correo debe ser de la institución (@itcelaya.edu.mx)';
-                  }
-                  return null;
-                },
+              SizedBox(height: 20),
+              Text(
+                'Regístrate',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0B2545), // Azul oscuro
+                ),
+                textAlign: TextAlign.center,
               ),
-              TextFormField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Contraseña'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, ingresa tu contraseña';
-                  }
-                  if (value.length < 6) {
-                    return 'La contraseña debe tener al menos 6 caracteres';
-                  }
-                  return null;
-                },
+              SizedBox(height: 10),
+              Text(
+                'Por favor, regístrate para iniciar sesión',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF8A8D91), // Azul grisáceo claro
+                ),
+                textAlign: TextAlign.center,
               ),
-              TextFormField(
-                controller: _confirmPasswordController,
-                decoration: InputDecoration(labelText: 'Confirmar Contraseña'),
-                obscureText: true,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Por favor, confirma tu contraseña';
-                  }
-                  if (value != _passwordController.text) {
-                    return 'Las contraseñas no coinciden';
-                  }
-                  return null;
-                },
+              SizedBox(height: 30),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Nombre',
+                        prefixIcon:
+                            Icon(Icons.person, color: Color(0xFF0B2545)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu nombre';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Correo Electrónico',
+                        prefixIcon: Icon(Icons.email, color: Color(0xFF0B2545)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu correo';
+                        }
+                        if (!value.endsWith('@itcelaya.edu.mx')) {
+                          return 'El correo debe ser de la institución (@itcelaya.edu.mx)';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        prefixIcon: Icon(Icons.lock, color: Color(0xFF0B2545)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, ingresa tu contraseña';
+                        }
+                        if (value.length < 6) {
+                          return 'La contraseña debe tener al menos 6 caracteres';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      decoration: InputDecoration(
+                        labelText: 'Confirmar Contraseña',
+                        prefixIcon:
+                            Icon(Icons.lock_outline, color: Color(0xFF0B2545)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10.0),
+                        ),
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, confirma tu contraseña';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Las contraseñas no coinciden';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
               ),
               SizedBox(height: 20),
               ElevatedButton(
@@ -102,7 +165,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     }
                   }
                 },
-                child: Text('Registrar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0B2545), // Azul oscuro
+                  padding: EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                child: Text(
+                  'Registrar',
+                  style: TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "¿Ya tienes cuenta?",
+                    style: TextStyle(color: Color(0xFF8A8D91)),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/login');
+                    },
+                    child: Text(
+                      'Inicia Sesión',
+                      style: TextStyle(
+                        color: Color(0xFF0B2545), // Azul oscuro
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

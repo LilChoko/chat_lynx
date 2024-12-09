@@ -25,6 +25,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Chat App',
         initialRoute: '/login', // Siempre inicia en la pantalla de login
         routes: {

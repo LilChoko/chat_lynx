@@ -29,22 +29,49 @@ class _ChatListScreenState extends State<ChatListScreen> {
     }
   }
 
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return 'No date'; // Valor por defecto si es null
+    final date = timestamp.toDate();
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return '${difference.inDays} days ago';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Conversaciones'),
-        backgroundColor: Colors.teal,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.message),
-            onPressed: () {
-              Navigator.pushNamed(context, '/contacts');
-            },
-          ),
-        ],
+        backgroundColor: Color(0xFF0B2545),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Mensajes',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
@@ -60,8 +87,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(
               child: Text(
-                'Sin chats aún.',
-                style: TextStyle(color: Colors.grey, fontSize: 18),
+                'No conversations yet.',
+                style: TextStyle(color: Color(0xFF8A8D91), fontSize: 18),
               ),
             );
           }
@@ -77,26 +104,52 @@ class _ChatListScreenState extends State<ChatListScreen> {
               final otherUserId =
                   participants.firstWhere((id) => id != currentUserId);
               final otherUserName = chat['userNames'][otherUserId];
-              final chatId = chat.id;
+              final lastMessage = chat['lastMessage'] ?? '';
+              final updatedAt = chat['updatedAt'] != null
+                  ? chat['updatedAt'] as Timestamp
+                  : null;
+
+              final formattedTime = _formatTimestamp(updatedAt);
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: Colors.teal,
+                  backgroundImage: AssetImage('assets/avatar.png'),
+                  radius: 28,
                   child: Text(
                     otherUserName[0].toUpperCase(),
                     style: TextStyle(color: Colors.white),
                   ),
+                  backgroundColor: Colors.white,
                 ),
                 title: Text(
                   otherUserName,
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF0B2545),
+                  ),
                 ),
-                subtitle: Text(chat['lastMessage'] ?? 'Sin mensajes aún'),
+                subtitle: Text(
+                  lastMessage,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF8A8D91),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: Text(
+                  formattedTime,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF8A8D91),
+                  ),
+                ),
                 onTap: () {
                   Navigator.pushNamed(
                     context,
                     '/chatDetail',
-                    arguments: chatId,
+                    arguments: chat.id,
                   );
                 },
               );
@@ -104,23 +157,51 @@ class _ChatListScreenState extends State<ChatListScreen> {
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.call),
-            label: 'Llamadas',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chats',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 5,
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          backgroundColor: Color(0xFF0B2545),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Color(0xFF8A8D91),
+          showUnselectedLabels: true,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.call),
+              label: 'Llamadas',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: 'Chats',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: Padding(
+        padding:
+            const EdgeInsets.only(bottom: 0.0), // Ajusta la posición vertical
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/contacts');
+          },
+          backgroundColor: Color(0xFF0B2545),
+          child: Icon(Icons.add, color: Colors.white),
+        ),
       ),
     );
   }

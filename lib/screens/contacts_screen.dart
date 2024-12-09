@@ -8,25 +8,48 @@ class ContactsScreen extends StatelessWidget {
     final currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('Contactos'),
-        backgroundColor: Colors.teal,
+        backgroundColor: Color(0xFF0B2545),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Text(
+          'Contactos',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('users').snapshots(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
+          }
+
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return Center(
+              child: Text(
+                'No hay contactos disponibles.',
+                style: TextStyle(
+                  color: Color(0xFF8A8D91),
+                  fontSize: 18,
+                ),
+              ),
+            );
           }
 
           final users = snapshot.data!.docs
               .where(
                   (doc) => doc.id != currentUserId) // Filtra al usuario actual
               .toList();
-
-          if (users.isEmpty) {
-            return Center(child: Text('No hay contactos disponibles.'));
-          }
 
           return ListView.builder(
             itemCount: users.length,
@@ -35,10 +58,35 @@ class ContactsScreen extends StatelessWidget {
 
               return ListTile(
                 leading: CircleAvatar(
-                  child: Text(user['name'][0].toUpperCase()),
+                  backgroundImage: AssetImage('assets/avatar.png'),
+                  radius: 28,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    user['name'][0].toUpperCase(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                title: Text(user['name']),
-                subtitle: Text(user['email']),
+                title: Text(
+                  user['name'],
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF0B2545),
+                  ),
+                ),
+                subtitle: Text(
+                  user['email'],
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF8A8D91),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 onTap: () {
                   _startChat(
                     context,
