@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
 class ChatListScreen extends StatefulWidget {
   @override
@@ -179,7 +180,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.call),
-              label: 'Llamadas',
+              label: 'Calls',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.chat),
@@ -187,14 +188,14 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person),
-              label: 'Perfil',
+              label: 'Profile',
             ),
           ],
         ),
       ),
       floatingActionButton: Padding(
         padding:
-            const EdgeInsets.only(bottom: 0.0), // Ajusta la posición vertical
+            const EdgeInsets.only(bottom: 60.0), // Ajusta la posición vertical
         child: FloatingActionButton(
           onPressed: () {
             Navigator.pushNamed(context, '/contacts');

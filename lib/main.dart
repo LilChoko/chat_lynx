@@ -1,5 +1,6 @@
 import 'package:chat_lynx/screens/chat_detail_screen.dart';
 import 'package:chat_lynx/screens/contacts_screen.dart';
+import 'package:chat_lynx/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +34,7 @@ class MyApp extends StatelessWidget {
           '/register': (context) => RegisterScreen(),
           '/chatList': (context) => ChatListScreen(),
           '/contacts': (context) => ContactsScreen(),
+          '/profile': (context) => ProfileScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/chatDetail') {
