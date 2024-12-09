@@ -1,6 +1,8 @@
 import 'package:chat_lynx/screens/chat_detail_screen.dart';
 import 'package:chat_lynx/screens/contacts_screen.dart';
+import 'package:chat_lynx/screens/phone_screen.dart';
 import 'package:chat_lynx/screens/profile_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,10 +30,11 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Chat App',
-        initialRoute: '/login', // Siempre inicia en la pantalla de login
+        initialRoute: '/', // Ruta inicial dinámica
         routes: {
           '/login': (context) => LoginScreen(),
           '/register': (context) => RegisterScreen(),
+          '/phoneNumber': (context) => PhoneNumberScreen(),
           '/chatList': (context) => ChatListScreen(),
           '/contacts': (context) => ContactsScreen(),
           '/profile': (context) => ProfileScreen(),
@@ -45,7 +48,49 @@ class MyApp extends StatelessWidget {
           }
           return null;
         },
+        home: _getInitialScreen(), // Redirección dinámica al inicio
       ),
+    );
+  }
+
+  /// Determina dinámicamente la pantalla inicial
+  Widget _getInitialScreen() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+
+    if (currentUser == null) {
+      // Si no hay usuario autenticado, redirigir al LoginScreen
+      return LoginScreen();
+    }
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          // Si hay un error o el usuario no existe en Firestore, redirigir al LoginScreen
+          return LoginScreen();
+        }
+
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
+        final hasPhoneNumber = userData['phoneNumber'] != null &&
+            userData['phoneNumber'].isNotEmpty;
+
+        if (!hasPhoneNumber) {
+          // Si no tiene número de teléfono, redirigir a PhoneNumberScreen
+          return PhoneNumberScreen();
+        }
+
+        // Si ya tiene un número registrado, redirigir al ChatListScreen
+        return ChatListScreen();
+      },
     );
   }
 }

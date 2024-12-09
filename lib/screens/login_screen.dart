@@ -82,7 +82,9 @@ class LoginScreen extends StatelessWidget {
                     return;
                   }
 
-                  final success = await authProvider.login(email, password);
+                  // Llamar al método login con los tres argumentos
+                  final success =
+                      await authProvider.login(email, password, context);
                   if (success) {
                     Navigator.pushReplacementNamed(context, '/chatList');
                   } else {
