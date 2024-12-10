@@ -2,7 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
+  @override
+  _ProfileScreenState createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _selectedIndex = 2; // Índice para la pestaña "Perfil"
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    // Navegación entre las pestañas
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/calls'); // Navegar a Llamadas
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/chatList'); // Navegar a Chats
+        break;
+      case 2:
+        // Ya estamos en Perfil
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -16,8 +42,7 @@ class ProfileScreen extends StatelessWidget {
           icon:
               Icon(Icons.arrow_back, color: Colors.white), // Flecha hacia atrás
           onPressed: () {
-            Navigator.pushReplacementNamed(
-                context, '/chatList'); // Ir a ChatListScreen
+            Navigator.pushReplacementNamed(context, '/chatList'); // Ir a Chats
           },
         ),
         title: Text(
@@ -154,7 +179,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       Divider(),
-                      SizedBox(height: 40),
+                      SizedBox(height: 20),
                       // Botón de cerrar sesión más grande
                       ElevatedButton(
                         onPressed: () async {
@@ -191,6 +216,41 @@ class ProfileScreen extends StatelessWidget {
             ),
           );
         },
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 5,
+              blurRadius: 10,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          backgroundColor: Color(0xFF0B2545),
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Color(0xFF8A8D91),
+          showUnselectedLabels: true,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.video_call_rounded),
+              label: 'Llamadas',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_rounded),
+              label: 'Chats',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
+          ],
+        ),
       ),
     );
   }

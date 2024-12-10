@@ -1,3 +1,4 @@
+import 'package:chat_lynx/screens/calls_screen.dart';
 import 'package:chat_lynx/screens/chat_detail_screen.dart';
 import 'package:chat_lynx/screens/contacts_screen.dart';
 import 'package:chat_lynx/screens/phone_screen.dart';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
           '/chatList': (context) => ChatListScreen(),
           '/contacts': (context) => ContactsScreen(),
           '/profile': (context) => ProfileScreen(),
+          '/calls': (context) => CallsScreen(),
         },
         onGenerateRoute: (settings) {
           if (settings.name == '/chatDetail') {

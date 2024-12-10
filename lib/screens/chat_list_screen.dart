@@ -22,7 +22,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
         Navigator.pushReplacementNamed(context, '/calls'); // Llamadas
         break;
       case 1:
-        // Ya estamos en "Chats", no hacer nada
+        // Ya estamos en la Lista de Chats
         break;
       case 2:
         Navigator.pushReplacementNamed(context, '/profile'); // Perfil
