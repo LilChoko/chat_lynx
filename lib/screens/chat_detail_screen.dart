@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:video_player/video_player.dart';
 import 'dart:io';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -154,27 +155,10 @@ class ChatDetailScreen extends StatelessWidget {
                         ),
                         child: fileUrl != null
                             ? fileType == 'image'
-                                ? InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              FullScreenImage(fileUrl: fileUrl),
-                                        ),
-                                      );
-                                    },
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(
-                                        fileUrl,
-                                        width: 150,
-                                        height: 150,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  )
-                                : Text('Archivo enviado')
+                                ? _buildImage(fileUrl, context)
+                                : fileType == 'video'
+                                    ? _buildVideoPlayer(fileUrl)
+                                    : Text('Archivo enviado')
                             : Text(
                                 data?['text'] ?? '',
                                 style: TextStyle(
@@ -193,6 +177,35 @@ class ChatDetailScreen extends StatelessWidget {
           _buildMessageInput(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildImage(String fileUrl, BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FullScreenImage(fileUrl: fileUrl),
+          ),
+        );
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          fileUrl,
+          width: 150,
+          height: 150,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayer(String fileUrl) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: VideoPlayerWidget(fileUrl: fileUrl),
     );
   }
 
@@ -286,6 +299,75 @@ class ChatDetailScreen extends StatelessWidget {
   }
 }
 
+class VideoPlayerWidget extends StatefulWidget {
+  final String fileUrl;
+
+  VideoPlayerWidget({required this.fileUrl});
+
+  @override
+  _VideoPlayerWidgetState createState() => _VideoPlayerWidgetState();
+}
+
+class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
+  late VideoPlayerController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(
+      widget.fileUrl,
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: false),
+    )..initialize().then((_) {
+        setState(() {});
+      }).catchError((error) {
+        print("Error al inicializar el video: $error");
+      });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 150,
+      height: 150,
+      decoration: BoxDecoration(
+        color: Colors.black12,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: _controller.value.hasError
+          ? Center(
+              child: Text(
+                "Error al reproducir video",
+                style: TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            )
+          : _controller.value.isInitialized
+              ? GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (_controller.value.isPlaying) {
+                        _controller.pause();
+                      } else {
+                        _controller.play();
+                      }
+                    });
+                  },
+                  child: AspectRatio(
+                    aspectRatio: _controller.value.aspectRatio,
+                    child: VideoPlayer(_controller),
+                  ),
+                )
+              : Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
 class FullScreenImage extends StatelessWidget {
   final String fileUrl;
 
@@ -309,4 +391,3 @@ class FullScreenImage extends StatelessWidget {
     );
   }
 }
-//Sirve sin video 
